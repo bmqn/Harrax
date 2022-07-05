@@ -53,13 +53,30 @@ public:
 	uint32_t Create();
 
 	template<typename Comp>
-	bool HasComponent(Ent entity);
+	bool HasComponent(Ent entity)
+	{
+		ASSERT(entity < m_Entities.size(), "Attempt to access invalid entities component !");
+		return m_Entities[entity].ComponentMask[GetComponentByType<Comp>::Id()];
+	}
 
 	template<typename Comp>
-	void AddComponent(Ent entity, const Comp& component);
+	void AddComponent(Ent entity, const Comp& component)
+	{
+		if (!HasComponent<Comp>(entity))
+		{
+			m_Entities[entity].ComponentMask[GetComponentByType<Comp>::Id()] = true;
+			DynamicPool& pool = m_Components[GetComponentByType<Comp>::Id()];
+			pool.Get<Comp>(entity) = component;
+		}
+	}
 
 	template<typename Comp>
-	Comp &GetComponent(Ent entity);
+	Comp &GetComponent(Ent entity)
+	{
+		ASSERT(HasComponent<Comp>(entity), "Attempt to access component which has not been added !");
+		DynamicPool& pool = m_Components[GetComponentByType<Comp>::Id()];
+		return pool.Get<Comp>(entity);
+	}
 
 	template<typename ...Comps>
 	void View(ViewFunc forEach)
@@ -103,9 +120,6 @@ private:
 };
 
 #define DECL_COMPONENT(type, id)                                       \
-	template bool EntityManager::HasComponent<type>(Ent);              \
-	template void EntityManager::AddComponent<type>(Ent, const type&); \
-	template type &EntityManager::GetComponent<type>(Ent);             \
 	template<> struct GetComponentByType<type>                         \
 	{                                                                  \
 		static constexpr uint32_t Id()                                 \

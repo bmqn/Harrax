@@ -73,6 +73,10 @@ void App::Run()
 		// Render
 		Renderer::Clear();
 		Renderer::BeginScene(glm::perspective(70.0f, 16.0f / 9.0f, 0.1f, 50.0f));
+		Renderer::SubmitTriangle(
+			{glm::vec3{-0.5f, 0.5f, -1.0f}, glm::vec3{0.5f, 0.5f, -1.0f}, glm::vec3{0.0f, -0.5f, -1.0f}},
+			glm::vec4{0.8f, 0.6f, 0.4f, 1.0f}
+		);
 		EntityManager::Get()->View<TransformComponent, RenderComponent>([&](Ent entity) {
 			const auto &transform = EntityManager::Get()->GetComponent<TransformComponent>(entity);
 			const auto &render = EntityManager::Get()->GetComponent<RenderComponent>(entity);

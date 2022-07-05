@@ -1,7 +1,5 @@
 #pragma once
 
-#include "util/Error.hpp"
-
 #include <cstdint>
 #include <string>
 #include <memory>

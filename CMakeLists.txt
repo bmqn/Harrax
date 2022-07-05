@@ -28,7 +28,6 @@ set(DN_SRC
 	"${DN_SRC_DIR}/Config.h"
 	
 	"${DN_SRC_DIR}/util/Log.h"
-	"${DN_SRC_DIR}/util/Error.hpp"
 	"${DN_SRC_DIR}/util/Time.hpp"
 	"${DN_SRC_DIR}/util/Time.cpp"
 	"${DN_SRC_DIR}/util/DynamicPool.hpp"
