@@ -18,15 +18,11 @@ void Window::Init()
 	}
 
 	glfwSetErrorCallback(GLFWErrorCallback);
-
-	LOG("GLFW was successfully initialized !");
 }
 
 void Window::Terminate()
 {
 	glfwTerminate();
-
-	LOG("GLFW was successfully terminated !");
 }
 
 bool Window::Create(const WindowProps& props)

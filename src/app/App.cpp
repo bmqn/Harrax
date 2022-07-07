@@ -3,6 +3,7 @@
 #include "Config.h"
 #include "util/Log.h"
 #include "util/Time.hpp"
+#include "util/Random.hpp"
 #include "graphics/Renderer.hpp"
 #include "game/Entity.hpp"
 #include "maths/Algebra.hpp"
@@ -12,6 +13,8 @@
 void App::Run()
 {
 	// Init
+	Random::Init();
+
 	Window::Init();
 	WindowProps props = {
 		1280, 720, "App"
@@ -25,16 +28,20 @@ void App::Run()
 	
 	Renderer::Init();
 
-	auto ent1 = EntityManager::Get()->Create();
-	TransformComponent t1 = {
-		{0.0f, 0.0f, -1.0f},
-		{0.2f, 0.2f, 0.2f}
-	};
-	RenderComponent r1 = {
-		{0.2f, 0.8f, 0.6f, 1.0f}
-	};
-	EntityManager::Get()->AddComponent(ent1, t1);
-	EntityManager::Get()->AddComponent(ent1, r1);
+	for (int i = 0; i < 500; ++i)
+	{
+		auto ent = EntityManager::Get()->Create();
+		TransformComponent t = {
+			{Random::Float<float>(-5.0f, 5.0f), Random::Float<float>(-5.0f, 5.0f), Random::Float<float>(-15.0f, -5.0f)},
+			{0.2f, 0.2f, 0.2f},
+			{Random::Float<float>(), Random::Float<float>(), Random::Float<float>()}
+		};
+		RenderComponent r = {
+			{Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f}
+		};
+		EntityManager::Get()->AddComponent(ent, t);
+		EntityManager::Get()->AddComponent(ent, r);
+	}
 
 	// Run
 	auto before = Time::Millis();
@@ -65,17 +72,12 @@ void App::Run()
 		static float s_Angle = 0.0f;
 		s_Angle += static_cast<float>(delta);
 
-		auto &transform = EntityManager::Get()->GetComponent<TransformComponent>(0);
-		transform.Rotation.x = s_Angle;
-		transform.Rotation.y = -s_Angle * 0.2f;
-		transform.Rotation.z = s_Angle * 0.8f;
-
 		// Render
-		Renderer::Clear();
-		Renderer::BeginScene(glm::perspective(90.0f, 16.0f / 9.0f, 0.1f, 50.0f));
-		Renderer::SubmitTriangle(
-			{glm::vec3{-0.5f, 0.5f, -1.0f}, glm::vec3{0.5f, 0.5f, -1.0f}, glm::vec3{0.0f, -0.5f, -1.0f}},
-			glm::vec4{0.8f, 0.6f, 0.4f, 1.0f}
+		Renderer::BeginScene(
+			glm::perspective(45.0f, 16.0f / 9.0f, 0.1f, 50.0f)
+			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, -10.0f})
+			* glm::rotate(glm::mat4(1.0f), s_Angle, glm::vec3{0.0f, 1.0f, 0.0f})
+			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, 10.0f})
 		);
 		EntityManager::Get()->View<TransformComponent, RenderComponent>([&](Ent entity) {
 			const auto &transform = EntityManager::Get()->GetComponent<TransformComponent>(entity);
