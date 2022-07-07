@@ -1,11 +1,12 @@
 #include "Renderer.hpp"
 
 #include "util/Log.h"
+#include "util/File.hpp"
 
 #include <glad/glad.h>
 #include <glm/ext.hpp>
 
-static constexpr size_t k_MaxVertices = 8 * 1024;
+static constexpr size_t k_MaxVertices = 64 * 1024;
 
 struct Vertex
 {
@@ -27,58 +28,40 @@ struct BatchRendererData
 	}
 };
 
-static glm::mat4 s_ViewProj;
 static BatchRendererData s_RendererData;
 
 void Renderer::InitRenderer()
 {
-	const char *vertexShaderSrc =
-		"#version 330 core\n"
-		"layout (location = 0) in vec3 a_Position;\n"
-		"layout (location = 1) in vec3 a_Normal;\n"
-		"layout (location = 2) in vec4 a_Colour;\n"
-		"out vec3 v_Normal;\n"
-		"out vec4 v_Colour;\n"
-		"uniform mat4 u_ViewProj;\n"
-		"void main()\n"
-		"{\n"
-		"	v_Normal = a_Normal;\n"
-		"	v_Colour = a_Colour;\n"
-		"	gl_Position = u_ViewProj * vec4(a_Position, 1.0);\n"
-		"}\n";
+	auto vertexSrcRaw = ReadFile("basic.vertex");
+	auto fragmentSrcRaw = ReadFile("basic.fragment");
 
-	const char *fragmentShaderSrc =
-		"#version 330 core\n"
-		"layout (location = 0) out vec4 o_Colour;\n"
-		"in vec3 v_Normal;\n"
-		"in vec4 v_Colour;\n"
-		"void main()\n"
-		"{\n"
-		"	o_Colour = v_Colour;\n"
-		"	o_Colour.rgb *= max(0.0, dot(vec3(0.0, 0.0, -1.0), v_Normal));\n"
-		"}\n";
+	auto vertexSrcStr = std::string(vertexSrcRaw.begin(), vertexSrcRaw.end());
+	auto fragmentSrcStr = std::string(fragmentSrcRaw.begin(), fragmentSrcRaw.end());
+
+	const char *vertexSrc = vertexSrcStr.c_str();
+	const char *fragmentSrc = fragmentSrcStr.c_str();
 
 	int success;
-	char infoLog[512];
+	char infoLog[1024];
 
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSrc, NULL);
+	glShaderSource(vertexShader, 1, &vertexSrc, NULL);
 	glCompileShader(vertexShader);
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		LOG("Vertex shader failed to compile! %s", infoLog);
+		glGetShaderInfoLog(vertexShader, 1024, NULL, infoLog);
+		LOG("Vertex shader failed to compile!\n%s", infoLog);
 	}
 
 	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
+	glShaderSource(fragmentShader, 1, &fragmentSrc, NULL);
 	glCompileShader(fragmentShader);
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		LOG("Fragnent shader failed to compile! %s", infoLog);
+		glGetShaderInfoLog(fragmentShader, 1024, NULL, infoLog);
+		LOG("Fragment shader failed to compile!\n%s", infoLog);
 	}
 
 	s_RendererData.Program = glCreateProgram();
@@ -133,9 +116,7 @@ void Renderer::FlushVertices()
 	UnmapBuffer();
 
 	glUseProgram(s_RendererData.Program);
-	glBindVertexArray(s_RendererData.Vao);
 	glDrawArrays(GL_TRIANGLES, 0, s_RendererData.VerticesCount);
-	glBindVertexArray(0);
 	glUseProgram(0);
 
 	s_RendererData.VerticesCount = 0;
@@ -166,37 +147,30 @@ void Renderer::Init()
 {
 	InitRenderer();
 
+	glClearColor(0.2f, 0.5f, 0.7f, 1.0f);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glEnable(GL_DEPTH_TEST);
-
-	LOG("Renderer was successfully initialized !");
 }
 
 void Renderer::Terminate()
 {
 	CleanupRenderer();
-
-	LOG("Renderer was successfully terminated !");
-}
-
-void Renderer::Clear()
-{
-	glClearColor(0.2f, 0.5f, 0.7f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Renderer::BeginScene(const glm::mat4 &viewProj)
 {
-	s_ViewProj = viewProj;
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	GLint loc;
-
 	glUseProgram(s_RendererData.Program);
 	loc = glGetUniformLocation(s_RendererData.Program, "u_ViewProj");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(s_ViewProj));
+	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(viewProj));
 	glUseProgram(0);
+
+	glBindVertexArray(s_RendererData.Vao);
 }
 
 void Renderer::EndScene()
@@ -204,6 +178,8 @@ void Renderer::EndScene()
 	// TODO: Sorting etc.
 
 	FlushScene();
+
+	glBindVertexArray(0);
 }
 
 void Renderer::SubmitTriangle(const std::array<glm::vec3, 3> &vertices, glm::vec4 colour)
@@ -237,6 +213,23 @@ void Renderer::SubmitTriangle(const std::array<glm::vec3, 3> &vertices, glm::vec
 	s_RendererData.BatchDataPtr++;
 
 	s_RendererData.VerticesCount += 3;
+}
+
+void Renderer::SubmitQuad(const std::array<glm::vec3, 4> &vertices, glm::vec4 colour)
+{
+	if (s_RendererData.VerticesCount + 4 > k_MaxVertices)
+	{
+		FlushVertices();
+	}
+
+	Renderer::SubmitTriangle(
+		{ vertices[0], vertices[1], vertices[2] },
+		colour
+	);
+	Renderer::SubmitTriangle(
+		{ vertices[2], vertices[1], vertices[3] },
+		colour
+	);
 }
 
 void Renderer::SubmitCube(const std::array<glm::vec3, 8> &vertices, glm::vec4 colour)
