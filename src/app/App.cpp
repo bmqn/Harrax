@@ -5,7 +5,7 @@
 #include "util/Time.hpp"
 #include "util/Random.hpp"
 #include "graphics/Renderer.hpp"
-#include "game/Entity.hpp"
+#include "game/Registry.hpp"
 #include "maths/Algebra.hpp"
 
 #include <glm/ext.hpp>
@@ -30,18 +30,23 @@ void App::Run()
 
 	for (int i = 0; i < 500; ++i)
 	{
-		auto ent = EntityManager::Get()->Create();
-		TransformComponent t = {
+		auto entity = EntityManager::Get()->Create();
+		
+		EntityManager::Get()->AddComponent(entity, TransformComponent {
 			{Random::Float<float>(-5.0f, 5.0f), Random::Float<float>(-5.0f, 5.0f), Random::Float<float>(-15.0f, -5.0f)},
 			{0.2f, 0.2f, 0.2f},
 			{Random::Float<float>(), Random::Float<float>(), Random::Float<float>()}
-		};
-		RenderComponent r = {
+		});
+		EntityManager::Get()->AddComponent(entity, RenderComponent {
 			{Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f}
-		};
-		EntityManager::Get()->AddComponent(ent, t);
-		EntityManager::Get()->AddComponent(ent, r);
+		});
+		EntityManager::Get()->AddComponent(entity, PhysicsComponent {
+			{0.0f, -Random::Float<float>(), 0.0f}
+		});
 	}
+
+	auto renderSys = SystemManager::Get()->Create<RenderSystem>();
+	auto physicsSys = SystemManager::Get()->Create<PhysicsSystem>();
 
 	// Run
 	auto before = Time::Millis();
@@ -65,7 +70,8 @@ void App::Run()
 		while (lag >= k_TimeStep)
 		{
 			// Update logic
-			
+			physicsSys->Update(static_cast<float>(k_TimeStep));
+
 			lag -= k_TimeStep;
 		}
 
@@ -79,17 +85,7 @@ void App::Run()
 			* glm::rotate(glm::mat4(1.0f), s_Angle, glm::vec3{0.0f, 1.0f, 0.0f})
 			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, 10.0f})
 		);
-		EntityManager::Get()->View<TransformComponent, RenderComponent>([&](uint32_t entity) {
-			const auto &transform = EntityManager::Get()->GetComponent<TransformComponent>(entity);
-			const auto &render = EntityManager::Get()->GetComponent<RenderComponent>(entity);
-
-			auto vertices = MakeCubeVertices(
-				transform.Position, transform.Scale, transform.Rotation
-			);
-			glm::vec4 colour = render.Colour;
-
-			Renderer::SubmitCube(vertices, colour);
-		});
+		renderSys->Render();
 		Renderer::EndScene();
 
 		// Swap buffers

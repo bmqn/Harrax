@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Config.h"
 #include "util/Log.h"
 #include "util/DynamicPool.hpp"
 
@@ -12,7 +13,13 @@
 #include <functional>
 #include <algorithm>
 
-static constexpr size_t k_MaxComponents = 2 << 5;
+class EntityManager;
+
+template<typename ...Comps>
+std::vector<uint32_t> GetComponentIds()
+{
+	return { (EntityManager::Get()->GetComponentId<Comps>())... };
+}
 
 template<typename Comp>
 constexpr const char *GetComponentName() { return nullptr }
@@ -20,8 +27,6 @@ constexpr const char *GetComponentName() { return nullptr }
 template<typename Comp>
 class ComponentRegisterer
 {
-	class ::EntityManager;
-
 public:
 	ComponentRegisterer()
 	{
@@ -31,9 +36,14 @@ public:
 
 class EntityManager
 {
-	struct TransformComponent;
-
+	struct Entity;
 	template<typename> friend class ComponentRegisterer;
+	template<typename...> friend std::vector<uint32_t> GetComponentIds();
+
+	using EntityStore = std::vector<Entity>;
+	using CompStore = std::array<DynamicPool, k_MaxComponents>;
+	using CompRegistry = std::unordered_map<const char*, uint32_t>;
+	using ViewFunc = std::function<void(uint32_t)>;
 
 private:
 	struct Entity
@@ -43,11 +53,6 @@ private:
 		uint32_t Id;
 		CompMask ComponentMask;
 	};
-
-	using EntityStore = std::vector<Entity>;
-	using CompStore = std::array<DynamicPool, k_MaxComponents>;
-	using CompRegistry = std::unordered_map<std::string, uint32_t>;
-	using ViewFunc = std::function<void(uint32_t)>;
 
 public:
 	static EntityManager *Get()
@@ -85,19 +90,22 @@ public:
 	template<typename Comp>
 	Comp &GetComponent(uint32_t entityId)
 	{
-		ASSERT(HasComponent<Comp>(entityId), "Attempt to access component which has not been added !");
-		DynamicPool& pool = m_Components[GetComponentId<Comp>()];
-		return pool.Get<Comp>(entityId);
+		if (HasComponent<Comp>(entityId))
+		{
+			DynamicPool& pool = m_Components[GetComponentId<Comp>()];
+			return pool.Get<Comp>(entityId);
+		}
+		else
+		{
+			LOG_EVERY(1, "Attempt to access component which has not been added !");
+			static Comp s_Dummy;
+			return s_Dummy;
+		}
 	}
 
-	template<typename ...Comps>
-	void View(ViewFunc forEach)
+	std::vector<uint32_t> View(std::vector<uint32_t> compIds)
 	{
 		std::vector<uint32_t> entityIds;
-		std::vector<uint32_t> compIds = {
-			(GetComponentId<Comps>())...
-		};
-
 		for (Entity entity : m_Entities)
 		{
 			bool valid = true;
@@ -114,7 +122,22 @@ public:
 				entityIds.push_back(entity.Id);
 			}
 		}
+		return entityIds;
+	}
 
+	template<typename ...Comps>
+	std::vector<uint32_t> View()
+	{
+		std::vector<uint32_t> compIds = {
+			(GetComponentId<Comps>())...
+		};
+		return View(compIds);
+	}
+
+	template<typename ...Comps>
+	void View(ViewFunc forEach)
+	{
+		std::vector<uint32_t> entityIds = View<Comps>;
 		std::for_each(entityIds.begin(), entityIds.end(), forEach);
 	}
 
@@ -158,6 +181,4 @@ private:
  
 #define DECL_COMPONENT(type)                                                                       \
 	template<> constexpr const char *GetComponentName<type>() { return #type; }                    \
-	static ComponentRegisterer<type> _Register_##type;
-
-#include "game/Components.hpp"
+	static ComponentRegisterer<type> _RegisterComponent_##type;

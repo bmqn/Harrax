@@ -63,8 +63,10 @@ set(DN_SRC
 	"${DN_SRC_DIR}/graphics/Renderer.hpp"
 	"${DN_SRC_DIR}/graphics/Renderer.cpp"
 
+	"${DN_SRC_DIR}/game/Registry.hpp"
 	"${DN_SRC_DIR}/game/Entity.hpp"
-	"${DN_SRC_DIR}/game/Components.hpp"
+	"${DN_SRC_DIR}/game/System.hpp"
+	"${DN_SRC_DIR}/game/Registration.hpp"
 )
 
 #--------------------------------------------------------------------------------------------------
