@@ -125,10 +125,18 @@ private:
 	void RegisterComponent()
 	{
 		const char *compName = GetComponentName<Comp>();
-		if (m_ComponentsRegistry.find(compName) == m_ComponentsRegistry.end())
+		if (m_ComponentsRegistry.size() < k_MaxComponents)
 		{
-			m_ComponentsRegistry[compName] = static_cast<uint32_t>(m_ComponentsRegistry.size());
-			LOG("Registered component '%s' !", compName);
+			if (m_ComponentsRegistry.find(compName) == m_ComponentsRegistry.end())
+			{
+				m_ComponentsRegistry[compName] = static_cast<uint32_t>(m_ComponentsRegistry.size());
+				LOG("Registered component '%s' !", compName);
+			}
+		}
+		else
+		{
+			LOG("Failed to register component '%s'. "
+			    "Increase the limit (currently %zu) !", compName, k_MaxComponents);
 		}
 	};
 
@@ -137,7 +145,7 @@ private:
 	{
 		const char *compName = GetComponentName<Comp>();
 		ASSERT(m_ComponentsRegistry.find(compName) != m_ComponentsRegistry.end(),
-		       "Component '%s' has not been registered !", compName
+		       "Component '%s' is not registered !", compName
 		);
 		return m_ComponentsRegistry[compName];
 	}
