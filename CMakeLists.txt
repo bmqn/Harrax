@@ -64,7 +64,6 @@ set(DN_SRC
 	"${DN_SRC_DIR}/graphics/Renderer.cpp"
 
 	"${DN_SRC_DIR}/game/Entity.hpp"
-	"${DN_SRC_DIR}/game/Entity.cpp"
 	"${DN_SRC_DIR}/game/Components.hpp"
 )
 

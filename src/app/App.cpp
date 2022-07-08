@@ -79,7 +79,7 @@ void App::Run()
 			* glm::rotate(glm::mat4(1.0f), s_Angle, glm::vec3{0.0f, 1.0f, 0.0f})
 			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, 10.0f})
 		);
-		EntityManager::Get()->View<TransformComponent, RenderComponent>([&](Ent entity) {
+		EntityManager::Get()->View<TransformComponent, RenderComponent>([&](uint32_t entity) {
 			const auto &transform = EntityManager::Get()->GetComponent<TransformComponent>(entity);
 			const auto &render = EntityManager::Get()->GetComponent<RenderComponent>(entity);
 

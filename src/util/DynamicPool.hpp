@@ -18,6 +18,11 @@ public:
 		delete[] m_Data;
 	}
 
+	DynamicPool(const DynamicPool &other) = delete;
+	DynamicPool(const DynamicPool &&other) = delete;
+	DynamicPool& operator=(DynamicPool &other) = delete;
+	DynamicPool& operator=(DynamicPool &&other) = delete;
+
 	template<typename T>
 	T &Get(size_t index)
 	{

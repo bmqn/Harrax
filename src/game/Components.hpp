@@ -16,5 +16,5 @@ struct RenderComponent
 	glm::vec4 Colour;
 };
 
-DECL_COMPONENT(TransformComponent, 0)
-DECL_COMPONENT(RenderComponent, 1)
+DECL_COMPONENT(TransformComponent)
+DECL_COMPONENT(RenderComponent)
