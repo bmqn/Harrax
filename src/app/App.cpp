@@ -30,23 +30,23 @@ void App::Run()
 
 	for (int i = 0; i < 500; ++i)
 	{
-		auto entity = EntityManager::Get()->Create();
+		auto entity = Registry::Get()->CreateEntity();
 		
-		EntityManager::Get()->AddComponent(entity, TransformComponent {
+		Registry::Get()->AddComponent(entity, TransformComponent {
 			{Random::Float<float>(-5.0f, 5.0f), Random::Float<float>(-5.0f, 5.0f), Random::Float<float>(-15.0f, -5.0f)},
 			{0.2f, 0.2f, 0.2f},
 			{Random::Float<float>(), Random::Float<float>(), Random::Float<float>()}
 		});
-		EntityManager::Get()->AddComponent(entity, RenderComponent {
+		Registry::Get()->AddComponent(entity, RenderComponent {
 			{Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f}
 		});
-		EntityManager::Get()->AddComponent(entity, PhysicsComponent {
+		Registry::Get()->AddComponent(entity, PhysicsComponent {
 			{0.0f, -Random::Float<float>(), 0.0f}
 		});
 	}
 
-	auto renderSys = SystemManager::Get()->Create<RenderSystem>();
-	auto physicsSys = SystemManager::Get()->Create<PhysicsSystem>();
+	auto renderSys = Registry::Get()->CreateSystem<RenderSystem>();
+	auto physicsSys = Registry::Get()->CreateSystem<PhysicsSystem>();
 
 	// Run
 	auto before = Time::Millis();

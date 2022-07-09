@@ -1,10 +1,8 @@
 #pragma once
 
-#include "util/Random.hpp"
-#include "game/Entity.hpp"
-#include "game/System.hpp"
-#include "maths/Algebra.hpp"
 #include "graphics/Renderer.hpp"
+#include "maths/Algebra.hpp"
+#include "util/Random.hpp"
 
 #include <glm/glm.hpp>
 
@@ -44,8 +42,8 @@ public:
 	{
 		for (uint32_t entityId : m_Entities)
 		{
-			const auto &transform = EntityManager::Get()->GetComponent<TransformComponent>(entityId);
-			const auto &render = EntityManager::Get()->GetComponent<RenderComponent>(entityId);
+			const auto &transform = Registry::Get()->GetComponent<TransformComponent>(entityId);
+			const auto &render = Registry::Get()->GetComponent<RenderComponent>(entityId);
 
 			auto vertices = MakeCubeVertices(
 				transform.Position, transform.Scale, transform.Rotation
@@ -69,14 +67,14 @@ public:
 	{
 		for (uint32_t entityId : m_Entities)
 		{
-			auto &transform = EntityManager::Get()->GetComponent<TransformComponent>(entityId);
-			auto &physics = EntityManager::Get()->GetComponent<PhysicsComponent>(entityId);
+			/*auto &transform = Registry::Get()->GetComponent<TransformComponent>(entityId);
+			auto &physics = Registry::Get()->GetComponent<PhysicsComponent>(entityId);
 
 			transform.Position += physics.Velocity * dt;
 
 			transform.Rotation.x += 10.0f * dt * Random::Float<float>();
 			transform.Rotation.y += 5.0f * dt * Random::Float<float>();
-			transform.Rotation.z += 3.0f * dt * Random::Float<float>();
+			transform.Rotation.z += 3.0f * dt * Random::Float<float>();*/
 		}
 	}
 };
