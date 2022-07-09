@@ -5,7 +5,6 @@
 #include "game/Entity.hpp"
 
 #include <vector>
-#include <array>
 #include <unordered_map>
 
 template<typename Sys>
@@ -41,7 +40,7 @@ class SystemManager
 {
 	template<typename> friend class SystemRegisterer;
 
-	using SystemStore = std::array<std::unique_ptr<System>, k_MaxSystems>;
+	using SystemStore = std::vector<std::unique_ptr<System>>;
 	using SystemRegistry = std::unordered_map<const char*, uint32_t>;
 
 public:
@@ -54,7 +53,8 @@ public:
 	template<class Sys, typename ...Args>
 	Sys *Create(const Args&&... args)
 	{
-		uint32_t systemId = GetSystemId<Sys>();
+		uint32_t systemId = static_cast<uint32_t>(m_Systems.size());
+		m_Systems.emplace_back(nullptr);
 		m_Systems[systemId] = std::make_unique<Sys>(std::forward<Args>(args)...);
 		m_Systems[systemId]->m_Entities = EntityManager::Get()->View(GetSystemComponentIds<Sys>());
 		return static_cast<Sys*>(m_Systems[systemId].get());
