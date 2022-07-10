@@ -59,6 +59,8 @@ set(DN_SRC
 	"${DN_SRC_DIR}/app/App.cpp"
 	"${DN_SRC_DIR}/app/Window.hpp"
 	"${DN_SRC_DIR}/app/Window.cpp"
+	"${DN_SRC_DIR}/app/Input.hpp"
+	"${DN_SRC_DIR}/app/Input.cpp"
 
 	"${DN_SRC_DIR}/graphics/Renderer.hpp"
 	"${DN_SRC_DIR}/graphics/Renderer.cpp"

@@ -25,7 +25,7 @@ public:
 		typename I,
 		std::enable_if_t<std::is_integral_v<I>, bool> = true
 	>
-	static I Int(I min = 0, I max = std::numeric_limits<I>::max())
+	static I Int(I min = 0, I max = std::numeric_limits<I>::max() - 1)
 	{
 		static constexpr I kMaxValue = std::numeric_limits<I>::max();
 

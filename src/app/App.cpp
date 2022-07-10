@@ -30,23 +30,28 @@ void App::Run()
 
 	for (int i = 0; i < 500; ++i)
 	{
-		auto entity = Registry::Get()->CreateEntity();
+		auto registry = Registry::Get();
+		auto entity = registry->CreateEntity();
 		
-		Registry::Get()->AddComponent(entity, TransformComponent {
-			{Random::Float<float>(-5.0f, 5.0f), Random::Float<float>(-5.0f, 5.0f), Random::Float<float>(-15.0f, -5.0f)},
-			{0.2f, 0.2f, 0.2f},
-			{Random::Float<float>(), Random::Float<float>(), Random::Float<float>()}
+		registry->AddComponent(entity, TagComponent {
+			static_cast<decltype(TagComponent::Tag)>(Random::Bool())
 		});
-		Registry::Get()->AddComponent(entity, RenderComponent {
-			{Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f}
+		registry->AddComponent(entity, TransformComponent {
+			{ Random::Float<float>(-10.0f, 10.0f), Random::Float<float>(-10.0f, 10.0f),
+			 Random::Float<float>(-30.0f, -10.0f) },
+			{ Random::Float(.1f, .5f), Random::Float(.1f, .5f), Random::Float(.1f, .5f) },
+			{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>() }
 		});
-		Registry::Get()->AddComponent(entity, PhysicsComponent {
-			{0.0f, -Random::Float<float>(), 0.0f}
+		registry->AddComponent(entity, RenderComponent {
+			{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f }
+		});
+		registry->AddComponent(entity, PhysicsComponent {
+			{ 0.0f, -Random::Float<float>(), 0.0f }
 		});
 	}
 
 	auto renderSys = Registry::Get()->CreateSystem<RenderSystem>();
-	auto physicsSys = Registry::Get()->CreateSystem<PhysicsSystem>();
+	auto coolSys = Registry::Get()->CreateSystem<CoolSystem>();
 
 	// Run
 	auto before = Time::Millis();
@@ -70,20 +75,20 @@ void App::Run()
 		while (lag >= k_TimeStep)
 		{
 			// Update logic
-			physicsSys->Update(static_cast<float>(k_TimeStep));
+			coolSys->Update(static_cast<float>(k_TimeStep));
 
 			lag -= k_TimeStep;
 		}
 
 		static float s_Angle = 0.0f;
-		s_Angle += static_cast<float>(delta);
+		s_Angle += static_cast<float>(delta * 0.5);
 
 		// Render
 		Renderer::BeginScene(
 			glm::perspective(45.0f, 16.0f / 9.0f, 0.1f, 50.0f)
-			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, -10.0f})
+			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, -20.0f})
 			* glm::rotate(glm::mat4(1.0f), s_Angle, glm::vec3{0.0f, 1.0f, 0.0f})
-			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, 10.0f})
+			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, 20.0f})
 		);
 		renderSys->Render();
 		Renderer::EndScene();

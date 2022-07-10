@@ -1,9 +1,6 @@
 #pragma once
 
 #include "Config.h"
-
-#include "game/Registry.hpp"
-
 #include "util/Log.h"
 #include "util/DynamicPool.hpp"
 
@@ -16,11 +13,12 @@
 #include <array>
 #include <unordered_map>
 
-using ViewFunc = std::function<void(uint32_t)>;
 using CompIds = std::vector<uint32_t>;
 using EntIds = std::vector<uint32_t>;
+using ViewFunc = std::function<void(uint32_t)>;
 
-class EntityManager;
+template<typename Comp>
+constexpr const char *GetComponentName() { return nullptr; }
 
 class Entity
 {
@@ -113,7 +111,7 @@ private:
 	EntIds View()
 	{
 		CompIds compIds = {
-			(GetComponentId<Comps>())...
+			(GetComponentId<Comps>(), ...)
 		};
 		return View(compIds);
 	}
@@ -121,7 +119,7 @@ private:
 	template<typename ...Comps>
 	void View(ViewFunc forEach)
 	{
-		EntIds entityIds = View<Comps>;
+		EntIds entityIds = View<Comps...>;
 		std::for_each(entityIds.begin(), entityIds.end(), forEach);
 	}
 
@@ -159,26 +157,3 @@ private:
 	CompStore m_Components;
 	CompRegistry m_ComponentsRegistry;
 };
-
-template<typename Comp>
-constexpr const char *GetComponentName() { return nullptr }
-
-template<typename ...Comps>
-CompIds GetComponentIds()
-{
-	return { (Registry::Get()->m_EntityManager.GetComponentId<Comps>())... };
-}
-
-template<typename Comp>
-class ComponentRegisterer
-{
-public:
-	ComponentRegisterer()
-	{
-		Registry::Get()->m_EntityManager.RegisterComponent<Comp>();
-	}
-};
-
-#define DECL_COMPONENT(type)                                                                      \
-	template<> constexpr const char *GetComponentName<type>() { return #type; }                   \
-	static ComponentRegisterer<type> _RegisterComponent_##type;

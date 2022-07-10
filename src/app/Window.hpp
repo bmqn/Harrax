@@ -39,6 +39,8 @@ public:
 	void PollEvents();
 	void SwapBuffers();
 
+	GLFWwindow *GetWindowHandle() { return m_Data->WindowHandle; }
+
 private:
 	std::unique_ptr<WindowData> m_Data;
 };

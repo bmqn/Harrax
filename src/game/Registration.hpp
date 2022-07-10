@@ -1,5 +1,6 @@
 #pragma once
 
+#include "app/Input.hpp"
 #include "graphics/Renderer.hpp"
 #include "maths/Algebra.hpp"
 #include "util/Random.hpp"
@@ -9,6 +10,15 @@
 //-------------------------------------------------------------------------------------------------
 //	Components
 //-------------------------------------------------------------------------------------------------
+
+struct TagComponent
+{
+	enum
+	{
+		OFF = 0,
+		ON = 1
+	} Tag;
+};
 
 struct TransformComponent
 {
@@ -27,6 +37,7 @@ struct RenderComponent
 	glm::vec4 Colour;
 };
 
+DECL_COMPONENT(TagComponent)
 DECL_COMPONENT(TransformComponent)
 DECL_COMPONENT(PhysicsComponent)
 DECL_COMPONENT(RenderComponent)
@@ -60,26 +71,31 @@ DECL_SYSTEM(
 	TransformComponent, RenderComponent
 )
 
-class PhysicsSystem : public System
+class CoolSystem : public System
 {
 public:
 	void Update(float dt)
 	{
+		static glm::vec2 s_LastPos = Input::GetMousePosition();
+		glm::vec2 thisPos = Input::GetMousePosition();
+
 		for (uint32_t entityId : m_Entities)
 		{
-			/*auto &transform = Registry::Get()->GetComponent<TransformComponent>(entityId);
-			auto &physics = Registry::Get()->GetComponent<PhysicsComponent>(entityId);
+			auto &transform = Registry::Get()->GetComponent<TransformComponent>(entityId);
+			auto &tag = Registry::Get()->GetComponent<TagComponent>(entityId);
 
-			transform.Position += physics.Velocity * dt;
-
-			transform.Rotation.x += 10.0f * dt * Random::Float<float>();
-			transform.Rotation.y += 5.0f * dt * Random::Float<float>();
-			transform.Rotation.z += 3.0f * dt * Random::Float<float>();*/
+			if (tag.Tag == TagComponent::ON)
+			{
+				transform.Rotation.x += (thisPos.x - s_LastPos.x) * 0.05f * Random::Float<float>();
+				transform.Rotation.y += (thisPos.y - s_LastPos.y) * 0.05f * Random::Float<float>();
+			}
 		}
+
+		s_LastPos = thisPos;
 	}
 };
 
 DECL_SYSTEM(
-	PhysicsSystem,
-	TransformComponent
+	CoolSystem,
+	TransformComponent, TagComponent
 )

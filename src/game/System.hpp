@@ -1,9 +1,6 @@
 #pragma once
 
 #include "Config.h"
-
-#include "game/Registry.hpp"
-
 #include "util/Log.h"
 
 #include <cstdint>
@@ -11,15 +8,29 @@
 #include <vector>
 #include <unordered_map>
 
-class SystemManager;
+using CompIds = std::vector<uint32_t>;
+using EntIds = std::vector<uint32_t>;
+
+template<typename Sys>
+constexpr const char *GetSystemName() { return nullptr; }
+
+template<typename Sys>
+constexpr CompIds GetSystemComponentIds() { return {}; }
 
 class System
 {
 	friend class SystemManager;
-	using EntityStore = std::vector<uint32_t>;
+
+public:
+	System() = default;
+	
+	void SetEntities(EntIds entityIds)
+	{
+		m_Entities = entityIds;
+	}
 
 protected:
-	EntityStore m_Entities;
+	EntIds m_Entities;
 };
 
 class SystemManager
@@ -39,7 +50,6 @@ private:
 		uint32_t systemId = static_cast<uint32_t>(m_Systems.size());
 		m_Systems.emplace_back(nullptr);
 		m_Systems[systemId] = std::make_unique<Sys>(std::forward<Args>(args)...);
-		m_Systems[systemId]->m_Entities = Registry::Get()->View(GetSystemComponentIds<Sys>());
 		return static_cast<Sys*>(m_Systems[systemId].get());
 	}
 
@@ -76,24 +86,3 @@ private:
 	SystemStore m_Systems;
 	SystemRegistry m_SystemsRegistry;
 };
-
-template<typename Sys>
-constexpr const char *GetSystemName() { return nullptr }
-
-template<typename Sys>
-constexpr CompIds GetSystemComponentIds() { return {}; }
-
-template<class Sys>
-class SystemRegisterer
-{
-public:
-	SystemRegisterer()
-	{
-		Registry::Get()->m_SystemManager.RegisterSystem<Sys>();
-	}
-};
-
-#define DECL_SYSTEM(type, ...)                                                                    \
-	template<> constexpr const char *GetSystemName<type>() { return #type; }                      \
-	template<> CompIds GetSystemComponentIds<type>() { return GetComponentIds<__VA_ARGS__>(); }   \
-	static SystemRegisterer<type> _RegisterSystem_##type;

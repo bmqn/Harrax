@@ -25,7 +25,13 @@ public:
 	template<class Sys, typename ...Args>
 	Sys *CreateSystem(const Args&&... args)
 	{
-		return m_SystemManager.Create<Sys, Args...>(std::forward<Args>(args)...);
+		Sys *sys = m_SystemManager.Create<Sys, Args...>(
+			std::forward<Args>(args)...
+		);
+		sys->SetEntities(
+			m_EntityManager.View(GetSystemComponentIds<Sys>())
+		);
+		return sys;
 	}
 
 	template<typename Comp>
@@ -54,13 +60,13 @@ public:
 	template<typename ...Comps>
 	EntIds View()
 	{
-		return m_EntityManager.View<Comps>();
+		return m_EntityManager.View<Comps...>();
 	}
 
 	template<typename ...Comps>
 	void View(ViewFunc forEach)
 	{
-		m_EntityManager.View<Comps>(forEach);
+		m_EntityManager.View<Comps...>(forEach);
 	}
 
 private:
@@ -70,5 +76,40 @@ private:
 	EntityManager m_EntityManager;
 	SystemManager m_SystemManager;
 };
+
+template<typename ...Comps>
+CompIds GetComponentIds()
+{
+	return { (Registry::Get()->m_EntityManager.GetComponentId<Comps>(), ...) };
+}
+
+template<typename Comp>
+class ComponentRegisterer
+{
+public:
+	ComponentRegisterer()
+	{
+		Registry::Get()->m_EntityManager.RegisterComponent<Comp>();
+	}
+};
+
+template<class Sys>
+class SystemRegisterer
+{
+public:
+	SystemRegisterer()
+	{
+		Registry::Get()->m_SystemManager.RegisterSystem<Sys>();
+	}
+};
+
+#define DECL_SYSTEM(type, ...)                                                                    \
+	template<> constexpr const char *GetSystemName<type>() { return #type; }                      \
+	template<> CompIds GetSystemComponentIds<type>() { return GetComponentIds<__VA_ARGS__>(); }   \
+	static SystemRegisterer<type> _RegisterSystem_##type;
+
+#define DECL_COMPONENT(type)                                                                      \
+	template<> constexpr const char *GetComponentName<type>() { return #type; }                   \
+	static ComponentRegisterer<type> _RegisterComponent_##type;
 
 #include "game/Registration.hpp"

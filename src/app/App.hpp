@@ -15,6 +15,7 @@ public:
 
 public:
 	void Run();
+	Window &GetWindow() { return *m_Window; }
 
 private:
 	App() = default;
