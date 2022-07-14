@@ -11,14 +11,15 @@
 using CompIds = std::vector<uint32_t>;
 using EntIds = std::vector<uint32_t>;
 
-template<typename Sys>
+template<class Sys>
 constexpr const char *GetSystemName() { return nullptr; }
 
-template<typename Sys>
+template<class Sys>
 constexpr CompIds GetSystemComponentIds() { return {}; }
 
 class System
 {
+	friend class Registry;
 	friend class SystemManager;
 
 public:
@@ -31,6 +32,7 @@ public:
 
 protected:
 	EntIds m_Entities;
+	CompIds m_Components;
 };
 
 class SystemManager

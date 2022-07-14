@@ -37,7 +37,7 @@ public:
 
 			while (index >= newSize)
 			{
-				newSize = ((newSize / 2) + 1) * 2;
+				newSize = newSize == 0 ? 1 : newSize * 2;
 			}
 
 			size_t oldSize = m_Size * sizeof(T);

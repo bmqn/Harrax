@@ -28,30 +28,44 @@ void App::Run()
 	
 	Renderer::Init();
 
-	for (int i = 0; i < 500; ++i)
+	for (int i = 0; i < 100; ++i)
 	{
 		auto registry = Registry::Get();
 		auto entity = registry->CreateEntity();
 		
-		registry->AddComponent(entity, TagComponent {
-			static_cast<decltype(TagComponent::Tag)>(Random::Bool())
-		});
-		registry->AddComponent(entity, TransformComponent {
-			{ Random::Float<float>(-10.0f, 10.0f), Random::Float<float>(-10.0f, 10.0f),
-			 Random::Float<float>(-30.0f, -10.0f) },
-			{ Random::Float(.1f, .5f), Random::Float(.1f, .5f), Random::Float(.1f, .5f) },
+		registry->AddComponent(entity, TransformComponent(
+			{ Random::Float(-10.0f, 10.0f), Random::Float(-10.0f, 10.0f), Random::Float(-30.0f, -10.0f) },
+			{ Random::Float(.5f, 1.0f), Random::Float(.5f, 1.0f), Random::Float(.5f, 1.0f) },
 			{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>() }
-		});
-		registry->AddComponent(entity, RenderComponent {
+		));
+		
+		registry->AddComponent(entity, MeshComponent(
 			{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f }
-		});
-		registry->AddComponent(entity, PhysicsComponent {
-			{ 0.0f, -Random::Float<float>(), 0.0f }
-		});
+		));
+
+		if (Random::Float<float>() < 0.8f)
+		{
+			registry->AddComponent(entity, ParticleEmitter {
+				0.8f, 0.2f,
+				3.0f, 1.0f,
+				0.01f, 0.05f,
+				{ Random::Float(-1.0f, 1.0f), Random::Float(-1.0f, 1.0f), Random::Float(-1.0f, 1.0f) },
+				{ Random::Float(0.3f, 0.5f), Random::Float(0.3f, 0.5f), Random::Float(0.3f, 0.5f) },
+				{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f },
+				{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 0.0f }
+			});
+		}
 	}
 
-	auto renderSys = Registry::Get()->CreateSystem<RenderSystem>();
-	auto coolSys = Registry::Get()->CreateSystem<CoolSystem>();
+	auto spriteRenderSys = Registry::Get()->CreateSystem<SpriteRenderSystem>();
+	auto meshRenderSys = Registry::Get()->CreateSystem<MeshRenderSystem>();
+	auto physicsSys = Registry::Get()->CreateSystem<PhysicsSystem>();
+	auto particleEmitterSys = Registry::Get()->CreateSystem<ParticleEmitterSystem>();
+	auto interpolatorSys = Registry::Get()->CreateSystem<InterpolatorSystem<glm::vec4>>();
+
+	Camera camera;
+	camera.Position = { 0.0f, 0.0f, -20.0f };
+	camera.Rotation = { 0.0f, 0.0f, 0.0f };
 
 	// Run
 	auto before = Time::Millis();
@@ -74,23 +88,25 @@ void App::Run()
 
 		while (lag >= k_TimeStep)
 		{
+			Registry::Get()->Update();
+
 			// Update logic
-			coolSys->Update(static_cast<float>(k_TimeStep));
+			physicsSys->Update(static_cast<float>(k_TimeStep));
+			particleEmitterSys->Update(static_cast<float>(k_TimeStep));
+			interpolatorSys->Update(static_cast<float>(k_TimeStep));
 
 			lag -= k_TimeStep;
 		}
 
 		static float s_Angle = 0.0f;
-		s_Angle += static_cast<float>(delta * 0.5);
+		s_Angle += static_cast<float>(delta);
+		camera.Rotation.y = s_Angle;
+		// camera.Rotation.z = s_Angle * 0.3f;
 
 		// Render
-		Renderer::BeginScene(
-			glm::perspective(45.0f, 16.0f / 9.0f, 0.1f, 50.0f)
-			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, -20.0f})
-			* glm::rotate(glm::mat4(1.0f), s_Angle, glm::vec3{0.0f, 1.0f, 0.0f})
-			* glm::translate(glm::mat4(1.0f), glm::vec3{0.0f, 0.0f, 20.0f})
-		);
-		renderSys->Render();
+		Renderer::BeginScene(camera);
+		meshRenderSys->Render();
+		spriteRenderSys->Render();
 		Renderer::EndScene();
 
 		// Swap buffers

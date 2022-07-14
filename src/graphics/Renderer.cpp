@@ -29,6 +29,7 @@ struct BatchRendererData
 };
 
 static BatchRendererData s_RendererData;
+static Camera s_Camera;
 
 void Renderer::InitRenderer()
 {
@@ -160,14 +161,21 @@ void Renderer::Terminate()
 	CleanupRenderer();
 }
 
-void Renderer::BeginScene(const glm::mat4 &viewProj)
+void Renderer::BeginScene(const Camera &camera)
 {
+	s_Camera = camera;
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glm::mat4 viewMatrix = camera.GetViewMatrix();
+	glm::mat4 profMatrix = camera.GetProjMatrix();
 
 	GLint loc;
 	glUseProgram(s_RendererData.Program);
-	loc = glGetUniformLocation(s_RendererData.Program, "u_ViewProj");
-	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(viewProj));
+	loc = glGetUniformLocation(s_RendererData.Program, "u_View");
+	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+	loc = glGetUniformLocation(s_RendererData.Program, "u_Proj");
+	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(profMatrix));
 	glUseProgram(0);
 
 	glBindVertexArray(s_RendererData.Vao);
@@ -180,6 +188,11 @@ void Renderer::EndScene()
 	FlushScene();
 
 	glBindVertexArray(0);
+}
+
+const Camera &Renderer::GetCamera()
+{
+	return s_Camera;
 }
 
 void Renderer::SubmitTriangle(const std::array<glm::vec3, 3> &vertices, glm::vec4 colour)

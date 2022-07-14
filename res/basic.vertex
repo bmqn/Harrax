@@ -8,12 +8,13 @@ out vec3 v_Position;
 out vec3 v_Normal;
 out vec4 v_Colour;
 
-uniform mat4 u_ViewProj;
+uniform mat4 u_View;
+uniform mat4 u_Proj;
 
 void main()
 {
 	v_Normal = a_Normal;
 	v_Colour = a_Colour;
 
-	gl_Position = u_ViewProj * vec4(a_Position, 1.0);
+	gl_Position = u_Proj * u_View * vec4(a_Position, 1.0);
 }

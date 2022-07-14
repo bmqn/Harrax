@@ -17,6 +17,19 @@ using CompIds = std::vector<uint32_t>;
 using EntIds = std::vector<uint32_t>;
 using ViewFunc = std::function<void(uint32_t)>;
 
+struct CompIdsHasher
+{
+	int operator()(const CompIds &compIds) const
+	{
+		int hash = static_cast<int>(compIds.size());
+		for(auto &compId : compIds)
+		{
+			hash ^= compId + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+		}
+		return hash;
+	}
+};
+
 template<typename Comp>
 constexpr const char *GetComponentName() { return nullptr; }
 
