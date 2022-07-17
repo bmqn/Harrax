@@ -11,5 +11,5 @@ vec3 lightDirection = vec3(0.0, 1.0, 0.0);
 void main()
 {
 	o_Colour = v_Colour;
-	o_Colour.rgb *= max(0.2, dot(normalize(-lightDirection), v_Normal));
+	o_Colour.rgb *= max(0.1, dot(normalize(-lightDirection), v_Normal));
 }

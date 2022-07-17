@@ -329,7 +329,7 @@ DECL_SYSTEM(
 template<typename T>
 class InterpolatorSystem : public System
 {
-	static constexpr size_t k_MaxParticles = 1024; 
+	static constexpr size_t k_MaxParticles = 2 * 1024; 
 
 public:
 	void Update(float dt)

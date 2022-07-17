@@ -35,7 +35,7 @@ void App::Run()
 		
 		registry->AddComponent(entity, TransformComponent(
 			{ Random::Float(-10.0f, 10.0f), Random::Float(-10.0f, 10.0f), Random::Float(-30.0f, -10.0f) },
-			{ Random::Float(.5f, 1.0f), Random::Float(.5f, 1.0f), Random::Float(.5f, 1.0f) },
+			{ 0.5f, 0.5f, 0.5f },
 			{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>() }
 		));
 		
@@ -43,16 +43,16 @@ void App::Run()
 			{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f }
 		));
 
-		if (Random::Float<float>() < 0.8f)
+		if (Random::Float<float>() < 0.2f)
 		{
 			registry->AddComponent(entity, ParticleEmitter {
-				0.8f, 0.2f,
+				1.5f, 0.2f,
 				3.0f, 1.0f,
-				0.01f, 0.05f,
+				0.1f, 0.05f,
 				{ Random::Float(-1.0f, 1.0f), Random::Float(-1.0f, 1.0f), Random::Float(-1.0f, 1.0f) },
 				{ Random::Float(0.3f, 0.5f), Random::Float(0.3f, 0.5f), Random::Float(0.3f, 0.5f) },
-				{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f },
-				{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 0.0f }
+				{ Random::Float(0.0f, 0.2f), Random::Float<float>(), Random::Float(0.0f, 0.2f), 1.0f },
+				{ Random::Float(0.8f, 1.0f), Random::Float<float>(), Random::Float(0.8f, 1.0f), 1.0f }
 			});
 		}
 	}
@@ -100,7 +100,7 @@ void App::Run()
 
 		static float s_Angle = 0.0f;
 		s_Angle += static_cast<float>(delta);
-		camera.Rotation.y = s_Angle;
+		camera.Rotation.y = s_Angle * 0.4f;
 		// camera.Rotation.z = s_Angle * 0.3f;
 
 		// Render
