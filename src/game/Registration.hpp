@@ -103,7 +103,7 @@ struct InterpolationComponent
 	bool Active;
 	float Period;
 	float PeriodCount;
-	T IntialValue;
+	T InitialValue;
 	T FinalValue;
 	T *Value;
 
@@ -294,7 +294,7 @@ public:
 				particleInterp.Active = true;
 				particleInterp.Period = lifetime;
 				particleInterp.PeriodCount = 0.0f;
-				particleInterp.IntialValue = particleEmitter.InitialColour;
+				particleInterp.InitialValue = particleEmitter.InitialColour;
 				particleInterp.FinalValue = particleEmitter.FinalColour;
 				// TODO: This is BAD but convenient.. this pointer could become invalid if the
 				// entities move around. Hopefully this won't happen much when playing.
@@ -355,7 +355,7 @@ public:
 				if (interp.Value)
 				{
 					float ratio = interp.PeriodCount / interp.Period;
-					*interp.Value = (1.0f - ratio) * interp.IntialValue + ratio * interp.FinalValue;
+					*interp.Value = (1.0f - ratio) * interp.InitialValue + ratio * interp.FinalValue;
 				}
 
 				interp.PeriodCount += dt;

@@ -132,7 +132,7 @@ private:
 	template<typename ...Comps>
 	void View(ViewFunc forEach)
 	{
-		EntIds entityIds = View<Comps...>;
+		EntIds entityIds = View<Comps...>();
 		std::for_each(entityIds.begin(), entityIds.end(), forEach);
 	}
 

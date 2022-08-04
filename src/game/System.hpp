@@ -15,7 +15,7 @@ template<class Sys>
 constexpr const char *GetSystemName() { return nullptr; }
 
 template<class Sys>
-constexpr CompIds GetSystemComponentIds() { return {}; }
+CompIds GetSystemComponentIds() { return {}; }
 
 class System
 {
