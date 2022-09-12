@@ -11,3 +11,12 @@ build/
 
 # CMake
 CMakeFiles
+
+# Gradle
+.gradle
+
+# Android
+local.properties
+
+# Idea
+.idea
