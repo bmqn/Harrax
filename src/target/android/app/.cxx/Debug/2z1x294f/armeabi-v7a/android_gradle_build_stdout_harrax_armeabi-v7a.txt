@@ -1,9 +1,0 @@
-ninja: Entering directory `/home/max/Documents/Dev/Harrax/src/target/android/app/.cxx/Debug/2z1x294f/armeabi-v7a'
-[1/8] Building CXX object CMakeFiles/harrax.dir/src/util/Time.cpp.o
-[2/8] Building CXX object CMakeFiles/harrax.dir/src/app/target/android/AndroidInput.cpp.o
-[3/8] Building CXX object CMakeFiles/harrax.dir/src/app/target/android/AndroidWindow.cpp.o
-[4/8] Building CXX object CMakeFiles/harrax.dir/src/util/Random.cpp.o
-[5/8] Building CXX object CMakeFiles/harrax.dir/src/target/android/app/src/main/cpp/Main.cpp.o
-[6/8] Building CXX object CMakeFiles/harrax.dir/src/graphics/target/android/AndroidRenderer.cpp.o
-[7/8] Building CXX object CMakeFiles/harrax.dir/src/app/App.cpp.o
-[8/8] Linking CXX shared library ../../../../build/intermediates/cxx/Debug/2z1x294f/obj/armeabi-v7a/libharrax.so
