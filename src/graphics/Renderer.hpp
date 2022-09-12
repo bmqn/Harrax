@@ -1,5 +1,7 @@
 #pragma once
 
+#include "app/App.hpp"
+
 #include <array>
 
 #include <glm/glm.hpp>
@@ -16,7 +18,9 @@ struct Camera
 
 	glm::mat4 GetProjMatrix() const
 	{
-		return glm::perspective(45.0f, 16.0f / 9.0f, 0.1f, 100.0f);
+		float width = static_cast<float>(App::Get()->GetWindow().GetWidth());
+		float height = static_cast<float>(App::Get()->GetWindow().GetHeight());
+		return glm::perspective(45.0f, width / height, 0.1f, 100.0f);
 	}
 
 	glm::vec3 Position;
@@ -25,15 +29,6 @@ struct Camera
 
 class Renderer
 {
-private:
-	static void InitRenderer();
-	static void CleanupRenderer();
-	static void FlushVertices();
-	static void FlushScene();
-
-	static void MapBuffer();
-	static void UnmapBuffer();
-
 public:
 	static void Init();
 	static void Terminate();

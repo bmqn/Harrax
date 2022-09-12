@@ -1,0 +1,7 @@
+Executable : /mnt/UbuntuStorage/bin/android/cmake/3.18.1/bin/ninja
+arguments : 
+-C
+/home/max/Documents/Dev/Harrax/src/target/android/app/.cxx/Debug/2z1x294f/x86
+harrax
+jvmArgs : 
+

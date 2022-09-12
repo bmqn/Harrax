@@ -4,8 +4,11 @@
 #include <string>
 #include <memory>
 
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#if HR_TARGET_ANDROID
+#include <android/native_window.h>
+#endif // HR_TARGET_ANDROID
+
+using WindowHandle = uintptr_t;
 
 struct WindowProps
 {
@@ -19,7 +22,7 @@ struct WindowData
 	uint32_t Width;
 	uint32_t Height;
 	std::string Title;
-	GLFWwindow *WindowHandle;
+	WindowHandle WindowHandle;
 };
 
 class Window
@@ -27,6 +30,11 @@ class Window
 public:
 	static void Init();
 	static void Terminate();
+
+#if HR_TARGET_ANDROID
+	static void SetNativeWindow(ANativeWindow *windowHandle);
+	static void SetShouldClose();
+#endif // HR_TARGET_ANDROID
 
 public:
 	Window() = default;
@@ -39,7 +47,9 @@ public:
 	void PollEvents();
 	void SwapBuffers();
 
-	GLFWwindow *GetWindowHandle() { return m_Data->WindowHandle; }
+	WindowHandle GetWindowHandle() { return m_Data->WindowHandle; };
+	uint32_t GetWidth() { return m_Data->Width; }
+	uint32_t GetHeight() { return m_Data->Height; }
 
 private:
 	std::unique_ptr<WindowData> m_Data;

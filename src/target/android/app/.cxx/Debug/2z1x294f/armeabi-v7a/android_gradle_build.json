@@ -1,0 +1,51 @@
+{
+  "buildFiles": [
+    "/home/max/Documents/Dev/Harrax/CMakeLists.txt",
+    "/home/max/Documents/Dev/Harrax/libs/glm/CMakeLists.txt",
+    "/home/max/Documents/Dev/Harrax/libs/glm/cmake/cmake_uninstall.cmake.in",
+    "/home/max/Documents/Dev/Harrax/libs/glm/glm/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/mnt/UbuntuStorage/bin/android/cmake/3.18.1/bin/ninja",
+      "-C",
+      "/home/max/Documents/Dev/Harrax/src/target/android/app/.cxx/Debug/2z1x294f/armeabi-v7a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/mnt/UbuntuStorage/bin/android/cmake/3.18.1/bin/ninja",
+    "-C",
+    "/home/max/Documents/Dev/Harrax/src/target/android/app/.cxx/Debug/2z1x294f/armeabi-v7a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "Harrax_CopyResources::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "armeabi-v7a",
+      "artifactName": "Harrax_CopyResources"
+    },
+    "harrax::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "armeabi-v7a",
+      "artifactName": "harrax",
+      "output": "/home/max/Documents/Dev/Harrax/src/target/android/app/build/intermediates/cxx/Debug/2z1x294f/obj/armeabi-v7a/libharrax.so",
+      "runtimeFiles": []
+    },
+    "uninstall::@87d16e3dbd78f67ca781": {
+      "toolchain": "toolchain",
+      "abi": "armeabi-v7a",
+      "artifactName": "uninstall"
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/mnt/UbuntuStorage/bin/android/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/clang",
+      "cppCompilerExecutable": "/mnt/UbuntuStorage/bin/android/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}

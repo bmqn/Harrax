@@ -1,0 +1,24 @@
+                    Executable : /usr/bin/cmake
+arguments : 
+-H/home/max/Documents/Dev/Harrax
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_SYSTEM_VERSION=26
+-DANDROID_PLATFORM=android-26
+-DANDROID_ABI=x86_64
+-DCMAKE_ANDROID_ARCH_ABI=x86_64
+-DANDROID_NDK=/mnt/UbuntuStorage/bin/android/ndk/21.4.7075529
+-DCMAKE_ANDROID_NDK=/mnt/UbuntuStorage/bin/android/ndk/21.4.7075529
+-DCMAKE_TOOLCHAIN_FILE=/mnt/UbuntuStorage/bin/android/ndk/21.4.7075529/build/cmake/android.toolchain.cmake
+-DCMAKE_MAKE_PROGRAM=/mnt/UbuntuStorage/bin/android/cmake/3.18.1/bin/ninja
+-DCMAKE_CXX_FLAGS=-std=c++17
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/home/max/Documents/Dev/Harrax/src/target/android/app/build/intermediates/cxx/Debug/2z1x294f/obj/x86_64
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/home/max/Documents/Dev/Harrax/src/target/android/app/build/intermediates/cxx/Debug/2z1x294f/obj/x86_64
+-DCMAKE_BUILD_TYPE=Debug
+-B/home/max/Documents/Dev/Harrax/src/target/android/app/.cxx/Debug/2z1x294f/x86_64
+-GNinja
+jvmArgs : 
+
+
+                    Build command args: []
+                    Version: 2
