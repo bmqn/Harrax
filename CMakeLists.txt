@@ -5,7 +5,7 @@ set(DN_SRC_DIR		${DN_ROOT_DIR}/src)
 set(DN_LIB_DIR		${DN_ROOT_DIR}/libs)
 set(DN_RES_DIR		${DN_ROOT_DIR}/res)
 
-project(Dungeon)
+project(Harrax)
 
 #--------------------------------------------------------------------------------------------------
 #	Configuration
@@ -84,17 +84,17 @@ add_subdirectory("libs/glm")
 #--------------------------------------------------------------------------------------------------
 #	Build
 #--------------------------------------------------------------------------------------------------
-add_executable(Dungeon ${DN_SRC})
-target_include_directories(Dungeon PRIVATE ${DN_HSP})
-target_link_libraries(Dungeon PRIVATE glfw glm)
+add_executable(Harrax ${DN_SRC})
+target_include_directories(Harrax PRIVATE ${DN_HSP})
+target_link_libraries(Harrax PRIVATE glfw glm)
 
-set_target_properties(Dungeon PROPERTIES
-	VS_DEBUGGER_WORKING_DIRECTORY $<TARGET_FILE_DIR:Dungeon>
+set_target_properties(Harrax PROPERTIES
+	VS_DEBUGGER_WORKING_DIRECTORY $<TARGET_FILE_DIR:Harrax>
 )
 
 #--------------------------------------------------------------------------------------------------
 #	Resources
 #--------------------------------------------------------------------------------------------------
-add_custom_target(Dungeon_CopyResources ALL
-	COMMAND ${CMAKE_COMMAND} -E copy_directory ${DN_RES_DIR} $<TARGET_FILE_DIR:Dungeon>
+add_custom_target(Harrax_CopyResources ALL
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${DN_RES_DIR} $<TARGET_FILE_DIR:Harrax>
 )
