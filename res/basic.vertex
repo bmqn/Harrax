@@ -13,6 +13,7 @@ uniform mat4 u_Proj;
 
 void main()
 {
+	v_Position = a_Position;
 	v_Normal = a_Normal;
 	v_Colour = a_Colour;
 

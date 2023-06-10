@@ -1,12 +1,9 @@
 #include "Time.hpp"
 
-#include <chrono>
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
-double Time::Millis()
+double Time::Seconds()
 {
-	auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::high_resolution_clock::now().time_since_epoch()
-	).count();
-
-	return static_cast<double>(millis) / 1000.0;
+	return glfwGetTime();
 }

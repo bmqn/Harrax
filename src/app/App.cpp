@@ -6,74 +6,71 @@
 #include "util/Random.hpp"
 #include "graphics/Renderer.hpp"
 #include "game/Registry.hpp"
+#include "game/Particles.hpp"
 #include "maths/Algebra.hpp"
 
 #include <glm/ext.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
-void App::Run()
+void App::Run(const Config &config)
 {
-	// Init
+	// --- Init ---
 	Random::Init();
 
 	Window::Init();
-	WindowProps props = {
-		1280, 720, "App"
-	};
 	m_Window = std::make_unique<Window>();
-	if (!m_Window->Create(props))
+	WindowProps props = { 1280, 720, config.Name };
+	if (!m_Window->Create(props, std::bind(&App::OnEvent, this, std::placeholders::_1)))
 	{
 		ASSERT(false, "Failed to create window !");
 		return;
 	}
+
+	Input::DisableCursor();
+	Input::EnableRawMouseInput();
 	
 	Renderer::Init();
 
-	for (int i = 0; i < 100; ++i)
+	Camera camera;
+	RenderContext renderContext;
+	renderContext.camera = &camera;
+
+	ParticleSystem particleSystem;
+	
+	for (int i = 0; i < 500; ++i)
 	{
-		auto registry = Registry::Get();
-		auto entity = registry->CreateEntity();
+		auto entity = Registry::Get()->Create();
 		
-		registry->AddComponent(entity, TransformComponent(
-			{ Random::Float(-10.0f, 10.0f), Random::Float(-10.0f, 10.0f), Random::Float(-30.0f, -10.0f) },
-			{ 0.5f, 0.5f, 0.5f },
-			{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>() }
-		));
+		Registry::Get()->AddComponent<TransformComponent>(entity,
+			glm::vec3{ Random::Float(-10.0f, 10.0f), Random::Float(-10.0f, 10.0f), Random::Float(-30.0f, -10.0f) },
+			glm::vec3{ 0.5f, 0.5f, 0.5f },
+			glm::vec3{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>() }
+		);
 		
-		registry->AddComponent(entity, MeshComponent(
-			{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f }
-		));
+		Registry::Get()->AddComponent<MeshComponent>(entity,
+			glm::vec4{ Random::Float<float>(), Random::Float<float>(), Random::Float<float>(), 1.0f }
+		);
 
 		if (Random::Float<float>() < 0.2f)
 		{
-			registry->AddComponent(entity, ParticleEmitter {
-				1.5f, 0.2f,
-				3.0f, 1.0f,
-				0.1f, 0.05f,
-				{ Random::Float(-1.0f, 1.0f), Random::Float(-1.0f, 1.0f), Random::Float(-1.0f, 1.0f) },
-				{ Random::Float(0.3f, 0.5f), Random::Float(0.3f, 0.5f), Random::Float(0.3f, 0.5f) },
-				{ Random::Float(0.0f, 0.2f), Random::Float<float>(), Random::Float(0.0f, 0.2f), 1.0f },
-				{ Random::Float(0.8f, 1.0f), Random::Float<float>(), Random::Float(0.8f, 1.0f), 1.0f }
-			});
+			Registry::Get()->AddComponent<ParticleEmitter>(entity,
+				2.5f, 0.2f, 1.5f, 1.0f, 0.1f,
+				glm::vec3{ Random::Float(-1.0f, 1.0f), Random::Float(-1.0f, 1.0f), Random::Float(-1.0f, 1.0f) },
+				glm::vec3{ Random::Float(0.3f, 0.5f), Random::Float(0.3f, 0.5f), Random::Float(0.3f, 0.5f) },
+				glm::vec4{ Random::Float(0.0f, 0.2f), Random::Float<float>(), Random::Float(0.0f, 0.2f), 1.0f },
+				glm::vec4{ Random::Float(0.8f, 1.0f), Random::Float<float>(), Random::Float(0.8f, 1.0f), 1.0f }
+			);
 		}
 	}
 
-	auto spriteRenderSys = Registry::Get()->CreateSystem<SpriteRenderSystem>();
-	auto meshRenderSys = Registry::Get()->CreateSystem<MeshRenderSystem>();
-	auto physicsSys = Registry::Get()->CreateSystem<PhysicsSystem>();
-	auto particleEmitterSys = Registry::Get()->CreateSystem<ParticleEmitterSystem>();
-	auto interpolatorSys = Registry::Get()->CreateSystem<InterpolatorSystem<glm::vec4>>();
-
-	Camera camera;
-	camera.Position = { 0.0f, 0.0f, -20.0f };
-	camera.Rotation = { 0.0f, 0.0f, 0.0f };
-
-	// Run
-	auto before = Time::Millis();
+	// --- Run ---
+	auto before = Time::Seconds();
 	auto lag = 0.0;
 
-	while (true)
+	m_IsRunning = true;
+	while (m_IsRunning)
 	{
-		auto now = Time::Millis();
+		auto now = Time::Seconds();
 		auto delta = now - before;
 		before = now;
 		lag += delta;
@@ -86,36 +83,127 @@ void App::Run()
 		// Process input / window events
 		m_Window->PollEvents();
 
+		static float pitch = 0.0f, yaw = -90.0f;
+		static glm::vec3 position = glm::vec3{};
+
 		while (lag >= k_TimeStep)
 		{
-			Registry::Get()->Update();
+			float dt = static_cast<float>(k_TimeStep);
 
-			// Update logic
-			physicsSys->Update(static_cast<float>(k_TimeStep));
-			particleEmitterSys->Update(static_cast<float>(k_TimeStep));
-			interpolatorSys->Update(static_cast<float>(k_TimeStep));
+			particleSystem.Update(dt);
+
+			Registry::Get()->View<TransformComponent, PhysicsComponent>([&dt](EntId id, auto &transform, auto &physics) {
+				static constexpr glm::vec3 k_Gravity = glm::vec3(0.0f, -9.81f, 0.0f);
+				if (physics.Active)
+				{
+					physics.Velocity += (physics.Acceleration + k_Gravity) * dt;
+					transform.Position += physics.Velocity * dt;
+				}
+			});
+
+			static auto lastMouse = Input::GetMousePosition();
+			auto nowMouse = Input::GetMousePosition();
+			auto deltaMouse = (lastMouse - nowMouse) * dt * 10.0f;
+			lastMouse = nowMouse;
+			pitch += deltaMouse.y;
+			yaw -= deltaMouse.x;
+
+			glm::vec3 look;
+			look.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+			look.y = sin(glm::radians(pitch));
+			look.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+
+			glm::vec3 forward = glm::normalize(look);
+			glm::vec3 right = glm::normalize(glm::cross(glm::vec3{0.0f, 1.0f, 0.0f}, forward));
+			glm::vec3 up = glm::cross(forward, right);
+
+			if (Input::GetKeyDown(GLFW_KEY_W))
+			{
+				position += forward;
+			}
+			else if (Input::GetKeyDown(GLFW_KEY_S))
+			{
+				position -= forward;
+			}
+			if (Input::GetKeyDown(GLFW_KEY_A))
+			{
+				position += right;
+			}
+			else if (Input::GetKeyDown(GLFW_KEY_D))
+			{
+				position -= right;
+			}
+
+			camera.LookAt(position, position + forward, up);
 
 			lag -= k_TimeStep;
 		}
 
-		static float s_Angle = 0.0f;
-		s_Angle += static_cast<float>(delta);
-		camera.Rotation.y = s_Angle * 0.4f;
-		// camera.Rotation.z = s_Angle * 0.3f;
-
 		// Render
-		Renderer::BeginScene(camera);
-		meshRenderSys->Render();
-		spriteRenderSys->Render();
+		Renderer::BeginScene(renderContext);
+
+		Registry::Get()->View<TransformComponent, MeshComponent>([&](EntId id, const auto &transform, const auto &mesh) {
+			if (mesh.Visible)
+			{
+				auto vertices = MakeCubeVertices(
+					transform.Position, transform.Scale, transform.Rotation
+				);
+				Renderer::SubmitCube(vertices, mesh.Colour);
+			}
+		});
+
+		Registry::Get()->View<TransformComponent, SpriteComponent>([&](EntId id, const auto &transform, const auto &sprite) {
+			if (sprite.Visible)
+			{
+				if (sprite.Billboard)
+				{
+					glm::vec3 forward = glm::normalize(transform.Position - position);
+					glm::vec3 right = glm::normalize(glm::cross(glm::vec3{0.0f, 1.0f, 0.0f}, forward));
+					glm::vec3 up = glm::cross(forward, right);
+
+					glm::mat4 billboard = glm::mat4(
+						glm::vec4(right, 0), glm::vec4(up, 0),
+						glm::vec4(forward, 0), glm::vec4(transform.Position, 1)
+					) * glm::scale(glm::mat4(1.0f), glm::vec3(transform.Scale));
+
+					auto vertices = MakeQuadVertices(billboard);
+					Renderer::SubmitQuad(vertices, sprite.Colour);
+				}
+				else
+				{
+					auto vertices = MakeQuadVertices(
+						transform.Position, transform.Scale, transform.Rotation
+					);
+					Renderer::SubmitQuad(vertices, sprite.Colour);
+				}
+			}
+		});
+
 		Renderer::EndScene();
 
 		// Swap buffers
 		m_Window->SwapBuffers();
 	}
 
-	// Terminate
+	// --- Terminate ---
 	Renderer::Terminate();
 
 	m_Window->Destroy();
 	Window::Terminate();
+}
+
+void App::OnEvent(Event &e)
+{
+	EventDispatcher dispatcher(e);
+	dispatcher.dispatch<WindowResizeEvent>([](WindowResizeEvent &e) {
+		Renderer::SetViewportSize(e.Width, e.Height);
+		return false;
+	});
+	dispatcher.dispatch<KeyPressedEvent>([&](KeyPressedEvent &e) {
+		if (e.Key == GLFW_KEY_ESCAPE)
+		{
+			m_IsRunning = false;
+		}
+		return false;
+	});
 }

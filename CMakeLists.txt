@@ -57,18 +57,20 @@ set(DN_SRC
 	
 	"${DN_SRC_DIR}/app/App.hpp"
 	"${DN_SRC_DIR}/app/App.cpp"
+	"${DN_SRC_DIR}/app/Event.hpp"
 	"${DN_SRC_DIR}/app/Window.hpp"
 	"${DN_SRC_DIR}/app/Window.cpp"
 	"${DN_SRC_DIR}/app/Input.hpp"
 	"${DN_SRC_DIR}/app/Input.cpp"
 
+	"${DN_SRC_DIR}/graphics/Camera.hpp"
 	"${DN_SRC_DIR}/graphics/Renderer.hpp"
 	"${DN_SRC_DIR}/graphics/Renderer.cpp"
 
-	"${DN_SRC_DIR}/game/Registry.hpp"
-	"${DN_SRC_DIR}/game/Entity.hpp"
-	"${DN_SRC_DIR}/game/System.hpp"
 	"${DN_SRC_DIR}/game/Registration.hpp"
+	"${DN_SRC_DIR}/game/Entity.hpp"
+	"${DN_SRC_DIR}/game/Registry.hpp"
+	"${DN_SRC_DIR}/game/Particles.hpp"
 )
 
 #--------------------------------------------------------------------------------------------------

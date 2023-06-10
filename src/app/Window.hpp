@@ -1,24 +1,27 @@
 #pragma once
 
+#include "Event.hpp"
+
 #include <cstdint>
 #include <string>
 #include <memory>
+#include <functional>
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 struct WindowProps
 {
-	uint32_t Width;
-	uint32_t Height;
+	uint32_t Width, Height;
 	std::string Title;
 };
 
 struct WindowData
 {
-	uint32_t Width;
-	uint32_t Height;
+	uint32_t Width, Height;
 	std::string Title;
+	std::function<void(Event &e)> Callback;
+
 	GLFWwindow *WindowHandle;
 };
 
@@ -31,7 +34,7 @@ public:
 public:
 	Window() = default;
 	
-	bool Create(const WindowProps& props);
+	bool Create(const WindowProps& props, std::function<void(Event &e)> callback);
 	void Destroy();
 
 	bool ShouldClose();

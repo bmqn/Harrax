@@ -29,13 +29,16 @@ struct BatchRendererData
 };
 
 static BatchRendererData s_RendererData;
-static Camera s_Camera;
 
 void Renderer::InitRenderer()
 {
-	auto vertexSrcRaw = ReadFile("basic.vertex");
-	auto fragmentSrcRaw = ReadFile("basic.fragment");
+	auto vertexSrcRawOpt = ReadFile("basic.vertex");
+	auto fragmentSrcRawOpt = ReadFile("basic.fragment");
+	ASSERT(vertexSrcRawOpt, "Could not load vertex shader source!");
+	ASSERT(fragmentSrcRawOpt, "Could not load fragment shader source!");
 
+	auto vertexSrcRaw = vertexSrcRawOpt.value();
+	auto fragmentSrcRaw = fragmentSrcRawOpt.value();
 	auto vertexSrcStr = std::string(vertexSrcRaw.begin(), vertexSrcRaw.end());
 	auto fragmentSrcStr = std::string(fragmentSrcRaw.begin(), fragmentSrcRaw.end());
 
@@ -161,17 +164,21 @@ void Renderer::Terminate()
 	CleanupRenderer();
 }
 
-void Renderer::BeginScene(const Camera &camera)
+void Renderer::SetViewportSize(int width, int height)
 {
-	s_Camera = camera;
+	glViewport(0, 0, width, height);
+}
 
+void Renderer::BeginScene(const RenderContext &context)
+{
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glm::mat4 viewMatrix = camera.GetViewMatrix();
-	glm::mat4 profMatrix = camera.GetProjMatrix();
+	glm::mat4 viewMatrix = context.camera->GetViewMatrix();
+	glm::mat4 profMatrix = context.camera->GetProjMatrix();
+
+	glUseProgram(s_RendererData.Program);
 
 	GLint loc;
-	glUseProgram(s_RendererData.Program);
 	loc = glGetUniformLocation(s_RendererData.Program, "u_View");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 	loc = glGetUniformLocation(s_RendererData.Program, "u_Proj");
@@ -183,16 +190,9 @@ void Renderer::BeginScene(const Camera &camera)
 
 void Renderer::EndScene()
 {
-	// TODO: Sorting etc.
-
 	FlushScene();
 
 	glBindVertexArray(0);
-}
-
-const Camera &Renderer::GetCamera()
-{
-	return s_Camera;
 }
 
 void Renderer::SubmitTriangle(const std::array<glm::vec3, 3> &vertices, glm::vec4 colour)
@@ -230,7 +230,7 @@ void Renderer::SubmitTriangle(const std::array<glm::vec3, 3> &vertices, glm::vec
 
 void Renderer::SubmitQuad(const std::array<glm::vec3, 4> &vertices, glm::vec4 colour)
 {
-	if (s_RendererData.VerticesCount + 4 > k_MaxVertices)
+	if (s_RendererData.VerticesCount + 2 * 3 > k_MaxVertices)
 	{
 		FlushVertices();
 	}
@@ -247,7 +247,7 @@ void Renderer::SubmitQuad(const std::array<glm::vec3, 4> &vertices, glm::vec4 co
 
 void Renderer::SubmitCube(const std::array<glm::vec3, 8> &vertices, glm::vec4 colour)
 {
-	if (s_RendererData.VerticesCount + 3 * 2 * 6 > k_MaxVertices)
+	if (s_RendererData.VerticesCount + 2 * 6 * 3 > k_MaxVertices)
 	{
 		FlushVertices();
 	}

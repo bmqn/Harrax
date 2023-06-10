@@ -8,6 +8,9 @@
 
 #include <stdio.h>
 
+#define _STRINGIFY(x) #x
+#define STRINGIFY(x) _STRINGIFY(x)
+
 #define _EXPAND(x) x
 #define _VARGS(_9, _8, _7, _6, _5, _4, _3, _2, _1, N, ...) N
 

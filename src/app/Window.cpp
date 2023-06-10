@@ -25,7 +25,7 @@ void Window::Terminate()
 	glfwTerminate();
 }
 
-bool Window::Create(const WindowProps& props)
+bool Window::Create(const WindowProps &props, std::function<void(Event &e)> callback)
 {
 	if (m_Data)
 	{
@@ -37,6 +37,7 @@ bool Window::Create(const WindowProps& props)
 	m_Data->Width = props.Width;
 	m_Data->Height = props.Height;
 	m_Data->Title = props.Title;
+	m_Data->Callback = callback;
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
@@ -60,6 +61,76 @@ bool Window::Create(const WindowProps& props)
 		m_Data.reset(nullptr);
 		return false;
 	}
+
+	glfwSetWindowUserPointer(m_Data->WindowHandle, m_Data.get());
+
+	glfwSetWindowCloseCallback(m_Data->WindowHandle, [](GLFWwindow *window) {
+		WindowData &data = *static_cast<WindowData *>(glfwGetWindowUserPointer(window));
+		WindowCloseEvent e;
+		data.Callback(e);
+	});
+
+	glfwSetWindowSizeCallback(m_Data->WindowHandle, [](GLFWwindow *window, int width, int height) {
+		WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+		WindowResizeEvent e(width, height);
+		data.Callback(e);
+	});
+
+	glfwSetKeyCallback(m_Data->WindowHandle, [](GLFWwindow *window, int key, int scancode, int action, int mods) {
+		WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+		switch (action)
+		{
+			case GLFW_RELEASE:
+			{
+				KeyReleasedEvent e(key, mods);
+				data.Callback(e);
+				break;
+			}
+			case GLFW_PRESS:
+			{
+				KeyPressedEvent e(key, mods);
+				data.Callback(e);
+				break;
+			}
+			case GLFW_REPEAT:
+			{
+				KeyRepeatEvent e(key, mods);
+				data.Callback(e);
+				break;
+			}
+		};
+	});
+
+	glfwSetMouseButtonCallback(m_Data->WindowHandle, [](GLFWwindow *window, int button, int action, int mods) {
+		WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+		switch (action)
+		{
+			case GLFW_RELEASE:
+			{
+				MouseReleasedEvent e(button, mods);
+				data.Callback(e);
+				break;
+			}
+			case GLFW_PRESS:
+			{
+				MousePressedEvent e(button, mods);
+				data.Callback(e);
+				break;
+			}
+		};
+	});
+
+	glfwSetCursorPosCallback(m_Data->WindowHandle, [](GLFWwindow *window, double xpos, double ypos) {
+		WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+		MouseMovedEvent e(xpos, ypos);
+		data.Callback(e);
+	});
+
+	glfwSetScrollCallback(m_Data->WindowHandle, [](GLFWwindow *window, double xoffset, double yoffset) {
+		WindowData &data = *static_cast<WindowData*>(glfwGetWindowUserPointer(window));
+		MouseScrolledEvent e(xoffset, yoffset);
+		data.Callback(e);
+	});
 
 	return true;
 }

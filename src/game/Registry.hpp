@@ -1,15 +1,13 @@
 #pragma once
 
 #include "game/Entity.hpp"
-#include "game/System.hpp"
 
 #include <functional>
+#include <tuple>
 
 class Registry
 {
 	template<typename> friend class ComponentRegisterer;
-	template<typename> friend class SystemRegisterer;
-	template<typename...> friend CompIds GetComponentIds();
 
 public:
 	static Registry *Get()
@@ -19,84 +17,42 @@ public:
 	}
 
 public:
-	uint32_t CreateEntity()
+	EntId Create()
 	{
 		return m_EntityManager.Create();
 	}
 
-	template<class Sys, typename ...Args>
-	Sys *CreateSystem(const Args&&... args)
+	template<typename Comp>
+	bool HasComponent(EntId id)
 	{
-		Sys *sys = m_SystemManager.Create<Sys, Args...>(
-			std::forward<Args>(args)...
-		);
-		sys->m_Components = GetSystemComponentIds<Sys>();
-		m_NeedsEntityRefresh = true;
-		return sys;
+		return m_EntityManager.HasComponent<Comp>(id);
+	}
+
+	template<typename Comp, typename... Args>
+	void AddComponent(EntId id, Args &&...args)
+	{
+		m_EntityManager.AddComponent<Comp>(id, std::forward<Args>(args)...);
 	}
 
 	template<typename Comp>
-	bool HasComponent(uint32_t entityId)
+	Comp &GetComponent(EntId id)
 	{
-		return m_EntityManager.HasComponent<Comp>(entityId);
+		return m_EntityManager.GetComponent<Comp>(id);
 	}
 
-	template<typename Comp>
-	void AddComponent(uint32_t entityId, const Comp &component)
+	template<typename... Comps, typename Func>
+	void View(const Func &func)
 	{
-		m_EntityManager.AddComponent<Comp>(entityId, component);
-		m_NeedsEntityRefresh = true;
-	}
-
-	template<typename Comp>
-	Comp &GetComponent(uint32_t entityId)
-	{
-		return m_EntityManager.GetComponent<Comp>(entityId);
-	}
-
-	EntIds View(CompIds compIds)
-	{
-		return m_EntityManager.View(compIds);
-	}
-
-	template<typename ...Comps>
-	EntIds View()
-	{
-		return m_EntityManager.View<Comps...>();
-	}
-
-	template<typename ...Comps>
-	void View(ViewFunc forEach)
-	{
-		m_EntityManager.View<Comps...>(forEach);
-	}
-
-	void Update()
-	{
-		if (m_NeedsEntityRefresh)
+		auto compMask = m_EntityManager.GetMask<Comps...>();
+		for (auto entity : m_EntityManager.m_Entities)
 		{
-			std::unordered_map<CompIds, EntIds, CompIdsHasher> entityIdsFromCompIdsCache;
-
-			for (auto &sys : m_SystemManager.m_Systems)
+			if (compMask == (entity.Mask & compMask))
 			{
-				if (sys)
-				{
-					if (   entityIdsFromCompIdsCache.find(sys->m_Components)
-						!= entityIdsFromCompIdsCache.end())
-					{
-						sys->SetEntities(entityIdsFromCompIdsCache[sys->m_Components]);
-					}
-					else
-					{
-						EntIds entityIds = m_EntityManager.View(sys->m_Components);
-						entityIdsFromCompIdsCache[sys->m_Components] = entityIds;
-						
-						sys->SetEntities(entityIds);
-					}
-				}
+				std::apply(func, std::tuple_cat(
+					std::make_tuple(entity.Id),
+					std::forward_as_tuple(m_EntityManager.GetComponent<Comps>(entity.Id)...)
+				));
 			}
-
-			m_NeedsEntityRefresh = false;
 		}
 	}
 
@@ -105,14 +61,17 @@ private:
 
 private:
 	EntityManager m_EntityManager;
-	SystemManager m_SystemManager;
-	bool m_NeedsEntityRefresh;
 };
 
-template<typename ...Comps>
-CompIds GetComponentIds()
+template <typename T = uint32_t, std::size_t N>
+constexpr T StrHash(char const(&s)[N]) noexcept
 {
-	return { (Registry::Get()->m_EntityManager.GetComponentId<Comps>(), ...) };
+	T val{};
+	for (size_t i = 0; i < N; ++i)
+	{
+		val |= s[i] << (i * CHAR_BIT);
+	}
+	return val;
 }
 
 template<typename Comp>
@@ -125,35 +84,9 @@ public:
 	}
 };
 
-template<class Sys>
-class SystemRegisterer
-{
-public:
-	SystemRegisterer()
-	{
-		Registry::Get()->m_SystemManager.RegisterSystem<Sys>();
-	}
-};
-
-#define DECL_SYSTEM(type, ...)                                                                    \
-	template<> constexpr const char *GetSystemName<type>() { return #type; }                      \
-	template<> CompIds GetSystemComponentIds<type>() { return GetComponentIds<__VA_ARGS__>(); }   \
-	static SystemRegisterer<type> _RegisterSystem_##type;
-
-#define DECL_SYSTEM_TEMPLATED(type, template_type, ...)                                           \
-	template<> constexpr const char *GetSystemName<type<template_type>>()                         \
-	{ return #type "<" #template_type ">"; }                                                      \
-	template<> CompIds GetSystemComponentIds<type<template_type>>()                               \
-	{ return GetComponentIds<__VA_ARGS__>(); }                                                    \
-	static SystemRegisterer<type<template_type>> _RegisterSystem_##type##_##template_type;
-
 #define DECL_COMPONENT(type)                                                                      \
 	template<> constexpr const char *GetComponentName<type>() { return #type; }                   \
+	template<> constexpr uint32_t GetComponentId<type>() { return StrHash(#type); }               \
 	static ComponentRegisterer<type> _RegisterComponent_##type;
-
-#define DECL_COMPONENT_TEMPLATED(type, template_type)                                             \
-	template<> constexpr const char *GetComponentName<type<template_type>>()                      \
-	{ return #type "<" #template_type ">"; }                                                      \
-	static ComponentRegisterer<type<template_type>> _RegisterComponent_##type##_##template_type;
 
 #include "game/Registration.hpp"

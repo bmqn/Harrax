@@ -2,6 +2,10 @@
 
 int main()
 {
-	App::Get()->Run();
+	Config config {
+		"Harrax"
+	};
+
+	App::Get()->Run(config);
 	return 0;
 }

@@ -1,26 +1,12 @@
 #pragma once
 
+#include "Camera.hpp"
+
 #include <array>
 
-#include <glm/glm.hpp>
-#include <glm/gtx/euler_angles.hpp>
-
-struct Camera
+struct RenderContext
 {
-	glm::mat4 GetViewMatrix() const
-	{
-		return glm::translate(glm::mat4(1.0f), Position)
-				* glm::eulerAngleYXZ(Rotation.y, Rotation.x, Rotation.z)
-				* glm::translate(glm::mat4(1.0f), -Position);
-	}
-
-	glm::mat4 GetProjMatrix() const
-	{
-		return glm::perspective(45.0f, 16.0f / 9.0f, 0.1f, 100.0f);
-	}
-
-	glm::vec3 Position;
-	glm::vec3 Rotation;
+	const Camera *camera;
 };
 
 class Renderer
@@ -38,10 +24,10 @@ public:
 	static void Init();
 	static void Terminate();
 
-	static void BeginScene(const Camera &camera);
-	static void EndScene();
+	static void SetViewportSize(int width, int height);
 
-	static const Camera &GetCamera();
+	static void BeginScene(const RenderContext &context);
+	static void EndScene();
 
 	static void SubmitTriangle(const std::array<glm::vec3, 3> &vertices, glm::vec4 colour);
 	static void SubmitQuad(const std::array<glm::vec3, 4> &vertices, glm::vec4 colour);

@@ -3,5 +3,5 @@
 class Time
 {
 public:
-	static double Millis();
+	static double Seconds();
 };

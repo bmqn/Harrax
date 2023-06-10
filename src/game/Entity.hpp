@@ -7,166 +7,94 @@
 #include <cstdint>
 #include <utility>
 #include <algorithm>
-#include <functional>
 #include <bitset>
 #include <vector>
-#include <array>
 #include <unordered_map>
+#include <tuple>
 
-using CompIds = std::vector<uint32_t>;
-using EntIds = std::vector<uint32_t>;
-using ViewFunc = std::function<void(uint32_t)>;
-
-struct CompIdsHasher
-{
-	int operator()(const CompIds &compIds) const
-	{
-		int hash = static_cast<int>(compIds.size());
-		for(auto &compId : compIds)
-		{
-			hash ^= compId + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-		}
-		return hash;
-	}
-};
+using EntId = uint32_t;
+using CompId = uint32_t;
+using CompMask = std::bitset<k_MaxComponents>;
 
 template<typename Comp>
 constexpr const char *GetComponentName() { return nullptr; }
+template<typename Comp>
+constexpr uint32_t GetComponentId() { return 0; }
 
-class Entity
+struct Entity
 {
-	friend class EntityManager;
-	using CompMask = std::bitset<k_MaxComponents>;
-	
-private:
-	uint32_t m_Id;
-	CompMask m_ComponentMask;
+	EntId Id;
+	CompMask Mask;
 };
 
 class EntityManager
 {
 	friend class Registry;
 	template<typename> friend class ComponentRegisterer;
-	template<typename...> friend CompIds GetComponentIds();
 
 	using EntityStore = std::vector<Entity>;
-	using CompStore = std::array<DynamicPool, k_MaxComponents>;
-	using CompRegistry = std::unordered_map<const char*, uint32_t>;
+	using CompStore = std::unordered_map<CompId, std::pair<size_t, DynamicPool>>;
 
 private:
 	EntityManager() = default;
 
-	uint32_t Create()
+	EntId Create()
 	{
-		uint32_t entityId = static_cast<uint32_t>(m_Entities.size());
+		EntId id = static_cast<EntId>(m_Entities.size());
 		m_Entities.emplace_back();
-		m_Entities[entityId].m_Id = entityId;
-		return m_Entities[entityId].m_Id;
+		m_Entities[id].Id = id;
+		m_Entities[id].Mask = CompMask();
+		return id;
 	}
 
 	template<typename Comp>
-	bool HasComponent(uint32_t entityId)
+	bool HasComponent(EntId id)
 	{
-		ASSERT(entityId < m_Entities.size(), "Attempt to access invalid entities component !");
-		return m_Entities[entityId].m_ComponentMask[GetComponentId<Comp>()];
+		ASSERT(m_Components.find(GetComponentId<Comp>()) != m_Components.end(),
+			"Attempt to access invalid entities component !");
+		return m_Entities[id].Mask[m_Components[GetComponentId<Comp>()].first];
 	}
 
-	template<typename Comp>
-	void AddComponent(uint32_t entityId, const Comp& component)
+	template<typename Comp, typename... Args>
+	void AddComponent(EntId id, Args &&...args)
 	{
-		if (!HasComponent<Comp>(entityId))
+		if (!HasComponent<Comp>(id))
 		{
-			m_Entities[entityId].m_ComponentMask[GetComponentId<Comp>()] = true;
-			DynamicPool &pool = m_Components[GetComponentId<Comp>()];
-			pool.Get<Comp>(entityId) = component;
+			DynamicPool &pool = m_Components[GetComponentId<Comp>()].second;
+			pool.Get<Comp>(id) = Comp{args...};
+			
+			m_Entities[id].Mask.flip(m_Components[GetComponentId<Comp>()].first);
 		}
 	}
 
 	template<typename Comp>
-	Comp &GetComponent(uint32_t entityId)
+	Comp &GetComponent(EntId id)
 	{
-		if (HasComponent<Comp>(entityId))
-		{
-			DynamicPool& pool = m_Components[GetComponentId<Comp>()];
-			return pool.Get<Comp>(entityId);
-		}
-		else
-		{
-			LOG_EVERY(1, "Attempt to access component which has not been added !");
-			static Comp s_Dummy;
-			return s_Dummy;
-		}
+		ASSERT(HasComponent<Comp>(id),
+			"Attempt to access invalid entities component !");
+		DynamicPool& pool = m_Components[GetComponentId<Comp>()].second;
+		return pool.Get<Comp>(id);
 	}
 
-	EntIds View(CompIds compIds)
+	template <typename... Comps>
+	CompMask GetMask()
 	{
-		EntIds entityIds;
-		for (Entity entity : m_Entities)
-		{
-			bool valid = true;
-			for (uint32_t compId : compIds)
-			{
-				if (!entity.m_ComponentMask[compId])
-				{
-					valid = false;
-					break;
-				}
-			}
-			if (valid)
-			{
-				entityIds.push_back(entity.m_Id);
-			}
-		}
-		return entityIds;
-	}
-
-	template<typename ...Comps>
-	EntIds View()
-	{
-		CompIds compIds = {
-			(GetComponentId<Comps>(), ...)
-		};
-		return View(compIds);
-	}
-
-	template<typename ...Comps>
-	void View(ViewFunc forEach)
-	{
-		EntIds entityIds = View<Comps...>();
-		std::for_each(entityIds.begin(), entityIds.end(), forEach);
+		CompMask mask;
+		(mask.flip(m_Components[GetComponentId<Comps>()].first), ...);
+		return mask;
 	}
 
 	template<typename Comp>
 	void RegisterComponent()
 	{
-		const char *compName = GetComponentName<Comp>();
-		if (m_ComponentsRegistry.size() < k_MaxComponents)
-		{
-			if (m_ComponentsRegistry.find(compName) == m_ComponentsRegistry.end())
-			{
-				m_ComponentsRegistry[compName] = static_cast<uint32_t>(m_ComponentsRegistry.size());
-				LOG("Registered component '%s' !", compName);
-			}
-		}
-		else
-		{
-			LOG("Failed to register component '%s'. "
-			    "Increase the limit (currently %zu) !", compName, k_MaxComponents);
-		}
+		ASSERT(m_Components.size() < k_MaxComponents,
+			"Cannot register more than '" STRINGIFY(k_MaxComponents) "' components !");
+		auto &component = m_Components[GetComponentId<Comp>()];
+		component.first = m_Components.size() - 1;
+		LOG("Registered component '%s' !", GetComponentName<Comp>());
 	};
-
-	template<typename Comp>
-	uint32_t GetComponentId()
-	{
-		const char *compName = GetComponentName<Comp>();
-		ASSERT(m_ComponentsRegistry.find(compName) != m_ComponentsRegistry.end(),
-		       "Component '%s' is not registered !", compName
-		);
-		return m_ComponentsRegistry[compName];
-	}
 
 private:
 	EntityStore m_Entities;
 	CompStore m_Components;
-	CompRegistry m_ComponentsRegistry;
 };

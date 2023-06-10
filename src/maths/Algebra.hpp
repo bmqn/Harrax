@@ -16,26 +16,55 @@ std::array<glm::vec3, 4> MakeQuadVertices(glm::vec3 position, glm::vec3 scale, g
 	glm::vec3 p1;
 	p1.x = position.x - scale.x;
 	p1.y = position.y - scale.y;
-	p1.z = position.z + scale.z;
+	p1.z = position.z;
 	p1 = rot * glm::vec4(p1, 1.0f);
 
 	glm::vec3 p2;
 	p2.x = position.x - scale.x;
 	p2.y = position.y + scale.y;
-	p2.z = position.z + scale.z;
+	p2.z = position.z;
 	p2 = rot * glm::vec4(p2, 1.0f);
 
 	glm::vec3 p3;
 	p3.x = position.x + scale.x;
 	p3.y = position.y - scale.y;
-	p3.z = position.z + scale.z;
+	p3.z = position.z;
 	p3 = rot * glm::vec4(p3, 1.0f);
 	
 	glm::vec3 p4;
 	p4.x = position.x + scale.x;
 	p4.y = position.y + scale.y;
-	p4.z = position.z + scale.z;
+	p4.z = position.z;
 	p4 = rot * glm::vec4(p4, 1.0f);
+
+	return { p1, p2, p3, p4 };
+}
+
+std::array<glm::vec3, 4> MakeQuadVertices(glm::mat4 transform)
+{
+	glm::vec3 p1;
+	p1.x = -1.0f;
+	p1.y = -1.0f;
+	p1.z = 0.0f;
+	p1 = transform * glm::vec4(p1, 1.0f);
+
+	glm::vec3 p2;
+	p2.x = -1.0f;
+	p2.y = 1.0f;
+	p2.z = 0.0f;
+	p2 = transform * glm::vec4(p2, 1.0f);
+
+	glm::vec3 p3;
+	p3.x = 1.0f;
+	p3.y = -1.0f;
+	p3.z = 0.0f;
+	p3 = transform * glm::vec4(p3, 1.0f);
+	
+	glm::vec3 p4;
+	p4.x = 1.0f;
+	p4.y = 1.0f;
+	p4.z = 0.0f;
+	p4 = transform * glm::vec4(p4, 1.0f);
 
 	return { p1, p2, p3, p4 };
 }
